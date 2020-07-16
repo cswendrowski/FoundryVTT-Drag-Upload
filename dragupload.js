@@ -14,6 +14,7 @@ Hooks.once('ready', async function() {
 });
 
 async function createFoldersIfMissing() {
+    await createFolderIfMissing(".", "dragupload");
     await createFolderIfMissing("dragupload", "dragupload/uploaded");
     await createFolderIfMissing("dragupload/uploaded", "dragupload/uploaded/tokens");
     await createFolderIfMissing("dragupload/uploaded", "dragupload/uploaded/tiles");
