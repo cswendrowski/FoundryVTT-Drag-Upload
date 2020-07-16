@@ -23,11 +23,15 @@ async function createFoldersIfMissing() {
 }
 
 async function createFolderIfMissing(target, folderPath) {
-    var base = await FilePicker.browse("data", folderPath);
+    var source = "data";
+    if (ForgeVTT && ForgeVTT.usingTheForge) {
+        source = "forgevtt";
+    }
+    var base = await FilePicker.browse(source, folderPath);
     console.log(base.target);
     if (base.target == target)
     {
-        await FilePicker.createDirectory("data", folderPath);
+        await FilePicker.createDirectory(source, folderPath);
     }
 }
 
@@ -85,7 +89,11 @@ async function HandleAudioFile(event, file) {
 }
 
 async function CreateAmbientAudio(event, file) {
-    var response = await FilePicker.upload("data", "dragupload/uploaded/ambient", file, {});
+    var source = "data";
+    if (ForgeVTT && ForgeVTT.usingTheForge) {
+        source = "forgevtt";
+    }
+    var response = await FilePicker.upload(source, "dragupload/uploaded/ambient", file, {});
 
     var data = {
         t: "l",
@@ -106,7 +114,11 @@ async function CreateAmbientAudio(event, file) {
 }
 
 async function CreateTile(event, file) {
-    var response = await FilePicker.upload("data", "dragupload/uploaded/tiles", file, {});
+    var source = "data";
+    if (ForgeVTT && ForgeVTT.usingTheForge) {
+        source = "forgevtt";
+    }
+    var response = await FilePicker.upload(source, "dragupload/uploaded/tiles", file, {});
     console.log(response);
 
     var data = CreateImgData(event, response);
@@ -130,7 +142,11 @@ async function CreateTile(event, file) {
 }
 
 async function CreateJournalPin(event, file) {
-    var response = await FilePicker.upload("data", "dragupload/uploaded/journals", file, {});
+    var source = "data";
+    if (ForgeVTT && ForgeVTT.usingTheForge) {
+        source = "forgevtt";
+    }
+    var response = await FilePicker.upload(source, "dragupload/uploaded/journals", file, {});
     console.log(response);
 
     var data = {
@@ -160,7 +176,11 @@ async function CreateJournalPin(event, file) {
 }
 
 async function CreateActor(event, file) {
-    var response = await FilePicker.upload("data", "dragupload/uploaded/tokens", file, {});
+    var source = "data";
+    if (ForgeVTT && ForgeVTT.usingTheForge) {
+        source = "forgevtt";
+    }
+    var response = await FilePicker.upload(source, "dragupload/uploaded/tokens", file, {});
     console.log(response);
 
     var data = CreateImgData(event, response);
