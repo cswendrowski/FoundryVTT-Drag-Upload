@@ -24,7 +24,7 @@ async function createFoldersIfMissing() {
 
 async function createFolderIfMissing(target, folderPath) {
     var source = "data";
-    if (ForgeVTT && ForgeVTT.usingTheForge) {
+    if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
     var base = await FilePicker.browse(source, folderPath);
@@ -90,7 +90,7 @@ async function HandleAudioFile(event, file) {
 
 async function CreateAmbientAudio(event, file) {
     var source = "data";
-    if (ForgeVTT && ForgeVTT.usingTheForge) {
+    if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
     var response = await FilePicker.upload(source, "dragupload/uploaded/ambient", file, {});
@@ -115,7 +115,7 @@ async function CreateAmbientAudio(event, file) {
 
 async function CreateTile(event, file) {
     var source = "data";
-    if (ForgeVTT && ForgeVTT.usingTheForge) {
+    if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
     var response = await FilePicker.upload(source, "dragupload/uploaded/tiles", file, {});
@@ -143,7 +143,7 @@ async function CreateTile(event, file) {
 
 async function CreateJournalPin(event, file) {
     var source = "data";
-    if (ForgeVTT && ForgeVTT.usingTheForge) {
+    if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
     var response = await FilePicker.upload(source, "dragupload/uploaded/journals", file, {});
@@ -177,7 +177,7 @@ async function CreateJournalPin(event, file) {
 
 async function CreateActor(event, file) {
     var source = "data";
-    if (ForgeVTT && ForgeVTT.usingTheForge) {
+    if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
     var response = await FilePicker.upload(source, "dragupload/uploaded/tokens", file, {});
