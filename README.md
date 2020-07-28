@@ -20,3 +20,6 @@ Otherwise, it will be treated as an Image and created based on the current activ
 
 ## Changelog
 
+### v1.1.0
+* https://github.com/cswendrowski/FoundryVTT-Drag-Upload/issues/1 - Added full support for all audio types (except WEBM, because that's almost always an animated image)
+* https://github.com/cswendrowski/FoundryVTT-Drag-Upload/issues/2 - When WEBM is dragged, only set the Token and not the Actor
