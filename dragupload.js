@@ -61,7 +61,7 @@ async function handleDrop(event) {
     }
     console.log(file);
 
-    if (file.name.endsWith(".mp3") || file.name.endsWith(".mp4") || file.name.endsWith(".wav") || file.name.endsWith(".flac")) {
+    if (AUDIO_FILE_EXTENSIONS.filter(x => x != "webm" && file.name.endsWith(x)).length > 0) {
         await HandleAudioFile(event, file);
         return;
     }
@@ -184,6 +184,12 @@ async function CreateActor(event, file) {
     console.log(response);
 
     var data = CreateImgData(event, response);
+    data.name = file.name;
+    var tokenData = CreateImgData(event, response);
+
+    if (IMAGE_FILE_EXTENSIONS.filter(x => file.name.endsWith(x)).length == 0) {
+        data.img = "";
+    }
 
     // Ensure the user has permission to drop the actor and create a Token
     if ( !game.user.can("TOKEN_CREATE") ) {
@@ -204,25 +210,25 @@ async function CreateActor(event, file) {
            types.forEach(x => {
             d.data.buttons[x] = {
                 label: x,
-                callback: async () => await CreateActorWithType(event, data, x)
+                callback: async () => await CreateActorWithType(event, data, tokenData, x)
                }
            });
 
            d.render(true);
       }
       else {
-        await CreateActorWithType(event, data, types[0]);
+        await CreateActorWithType(event, data, tokenData, types[0]);
       }
   
       
 }
 
-async function CreateActorWithType(event, data, type) {
+async function CreateActorWithType(event, data, tokenImageData, type) {
     const actor = await Actor.create(
         {
-            name: "New Actor", 
+            name: data.name, 
             type: type,
-            img: data.img,
+            img: data.img
         });
         const actorData = duplicate(actor.data);
     
@@ -233,7 +239,7 @@ async function CreateActorWithType(event, data, type) {
         data.y -= (td.height * hg);
     
         // Snap the dropped position and validate that it is in-bounds
-        let tokenData = {x: data.x, y: data.y, hidden: event.altKey};
+        let tokenData = {x: data.x, y: data.y, hidden: event.altKey, img: tokenImageData.img };
         if ( !event.shiftKey ) mergeObject(tokenData, canvas.grid.getSnappedPosition(data.x, data.y, 1));
         if ( !canvas.grid.hitArea.contains(tokenData.x, tokenData.y) ) return false;
     
