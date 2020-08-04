@@ -52,6 +52,8 @@ async function handleDrop(event) {
         let url = event.dataTransfer.getData("Text")
         if (!url) {
             console.log("DragUpload | No Files detected, exiting");
+            // Let Foundry handle the event instead
+            canvas._onDrop(event);
             return;
         }
         // trimming query string
@@ -60,12 +62,16 @@ async function handleDrop(event) {
         const filename = splitUrl[splitUrl.length - 1]
         if (!filename.includes(".")) {
             console.log("DragUpload | Dragged non-file text:", url);
+            // Let Foundry handle the event instead
+            canvas._onDrop(event);
             return
         }
         const extension = filename.substr(filename.lastIndexOf(".") + 1)
         const validExtensions = IMAGE_FILE_EXTENSIONS.concat(VIDEO_FILE_EXTENSIONS).concat(AUDIO_FILE_EXTENSIONS)
         if (!validExtensions.includes(extension)) {
             console.log("DragUpload | Dragged file with bad extension:", url);
+            // Let Foundry handle the event instead
+            canvas._onDrop(event);
             return
         }
         // must be a valid file URL!
