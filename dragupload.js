@@ -47,12 +47,32 @@ async function handleDrop(event) {
     var files = event.dataTransfer.files;
     console.log(files);
 
-    if (!files) {
-        console.log("DragUpload | No Files detected, exitting");
-        return;
+    let file
+    if (!files || files.length === 0) {
+        let url = event.dataTransfer.getData("Text")
+        if (!url) {
+            console.log("DragUpload | No Files detected, exiting");
+            return;
+        }
+        // trimming query string
+        if (url.includes("?")) url = url.substr(0, url.indexOf("?"))
+        const splitUrl = url.split("/")
+        const filename = splitUrl[splitUrl.length - 1]
+        if (!filename.includes(".")) {
+            console.log("DragUpload | Dragged non-file text:", url);
+            return
+        }
+        const extension = filename.substr(filename.lastIndexOf(".") + 1)
+        const validExtensions = IMAGE_FILE_EXTENSIONS.concat(VIDEO_FILE_EXTENSIONS).concat(AUDIO_FILE_EXTENSIONS)
+        if (!validExtensions.includes(extension)) {
+            console.log("DragUpload | Dragged file with bad extension:", url);
+            return
+        }
+        // must be a valid file URL!
+        file = {isExternalUrl: true, url: url, name: filename}
+    } else {
+        file = files[0]
     }
-
-    var file = files[0];
 
     if (file == undefined) {
         // Let Foundry handle the event instead
@@ -93,7 +113,12 @@ async function CreateAmbientAudio(event, file) {
     if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
-    var response = await FilePicker.upload(source, "dragupload/uploaded/ambient", file, {});
+    let response
+    if (file.isExternalUrl) {
+        response = {path: file.url}
+    } else {
+        response = await FilePicker.upload(source, "dragupload/uploaded/ambient", file, {});
+    }
 
     var data = {
         t: "l",
@@ -118,7 +143,12 @@ async function CreateTile(event, file) {
     if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
-    var response = await FilePicker.upload(source, "dragupload/uploaded/tiles", file, {});
+    let response
+    if (file.isExternalUrl) {
+        response = {path: file.url}
+    } else {
+        response = await FilePicker.upload(source, "dragupload/uploaded/tiles", file, {});
+    }
     console.log(response);
 
     var data = CreateImgData(event, response);
@@ -146,7 +176,12 @@ async function CreateJournalPin(event, file) {
     if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
-    var response = await FilePicker.upload(source, "dragupload/uploaded/journals", file, {});
+    let response
+    if (file.isExternalUrl) {
+        response = {path: file.url}
+    } else {
+        response = await FilePicker.upload(source, "dragupload/uploaded/journals", file, {});
+    }
     console.log(response);
 
     var data = {
@@ -180,7 +215,12 @@ async function CreateActor(event, file) {
     if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
-    var response = await FilePicker.upload(source, "dragupload/uploaded/tokens", file, {});
+    let response
+    if (file.isExternalUrl) {
+        response = {path: file.url}
+    } else {
+        response = await FilePicker.upload(source, "dragupload/uploaded/tokens", file, {});
+    }
     console.log(response);
 
     var data = CreateImgData(event, response);
