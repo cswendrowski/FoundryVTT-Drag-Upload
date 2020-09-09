@@ -59,7 +59,7 @@ async function handleDrop(event) {
         // trimming query string
         if (url.includes("?")) url = url.substr(0, url.indexOf("?"))
         const splitUrl = url.split("/")
-        const filename = splitUrl[splitUrl.length - 1]
+        let filename = splitUrl[splitUrl.length - 1]
         if (!filename.includes(".")) {
             console.log("DragUpload | Dragged non-file text:", url);
             // Let Foundry handle the event instead
@@ -73,6 +73,11 @@ async function handleDrop(event) {
             // Let Foundry handle the event instead
             canvas._onDrop(event);
             return
+        }
+        // special case: chrome imgur drag from an album gives a low-res webp file instead of a PNG
+        if (url.includes("imgur") && filename.endsWith("_d.webp")) {
+            filename = filename.substr(0, filename.length - "_d.webp".length) + ".png"
+            url = url.substr(0, url.length - "_d.webp".length) + ".png"
         }
         // must be a valid file URL!
         file = {isExternalUrl: true, url: url, name: filename}
