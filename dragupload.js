@@ -59,7 +59,7 @@ async function handleDrop(event) {
         // trimming query string
         if (url.includes("?")) url = url.substr(0, url.indexOf("?"))
         const splitUrl = url.split("/")
-        const filename = splitUrl[splitUrl.length - 1]
+        let filename = splitUrl[splitUrl.length - 1]
         if (!filename.includes(".")) {
             console.log("DragUpload | Dragged non-file text:", url);
             // Let Foundry handle the event instead
@@ -73,6 +73,11 @@ async function handleDrop(event) {
             // Let Foundry handle the event instead
             canvas._onDrop(event);
             return
+        }
+        // special case: chrome imgur drag from an album gives a low-res webp file instead of a PNG
+        if (url.includes("imgur") && filename.endsWith("_d.webp")) {
+            filename = filename.substr(0, filename.length - "_d.webp".length) + ".png"
+            url = url.substr(0, url.length - "_d.webp".length) + ".png"
         }
         // must be a valid file URL!
         file = {isExternalUrl: true, url: url, name: filename}
@@ -243,7 +248,8 @@ async function CreateActor(event, file) {
       }
 
       var types =  Object.keys(CONFIG.Actor.sheetClasses);
-      
+      types.push("actorless")
+
       if (types.length > 1) {
         let d = new Dialog({
             title: "What Type should this Actor be created as?",
@@ -270,10 +276,14 @@ async function CreateActor(event, file) {
 }
 
 async function CreateActorWithType(event, data, tokenImageData, type) {
+    let createdType = type
+    if (type === "actorless") {
+        createdType = Object.keys(CONFIG.Actor.sheetClasses)[0]
+    }
     const actor = await Actor.create(
         {
             name: data.name, 
-            type: type,
+            type: createdType,
             img: data.img
         });
         const actorData = duplicate(actor.data);
@@ -303,6 +313,11 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
         // Submit the Token creation request and activate the Tokens layer (if not already active)
         canvas.layers[7].activate();
         Token.create(tokenData);
+
+        // delete actor if it's actorless
+        if (type === "actorless") {
+            Actor.delete(actor.id)
+        }
 }
 
 function CreateImgData(event, response) {
