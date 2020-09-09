@@ -243,7 +243,8 @@ async function CreateActor(event, file) {
       }
 
       var types =  Object.keys(CONFIG.Actor.sheetClasses);
-      
+      types.push("actorless")
+
       if (types.length > 1) {
         let d = new Dialog({
             title: "What Type should this Actor be created as?",
@@ -270,10 +271,14 @@ async function CreateActor(event, file) {
 }
 
 async function CreateActorWithType(event, data, tokenImageData, type) {
+    let createdType = type
+    if (type === "actorless") {
+        createdType = Object.keys(CONFIG.Actor.sheetClasses)[0]
+    }
     const actor = await Actor.create(
         {
             name: data.name, 
-            type: type,
+            type: createdType,
             img: data.img
         });
         const actorData = duplicate(actor.data);
@@ -303,6 +308,11 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
         // Submit the Token creation request and activate the Tokens layer (if not already active)
         canvas.layers[7].activate();
         Token.create(tokenData);
+
+        // delete actor if it's actorless
+        if (type === "actorless") {
+            Actor.delete(actor.id)
+        }
 }
 
 function CreateImgData(event, response) {
