@@ -334,5 +334,5 @@ function convertXYtoCanvas(data, event) {
     data.y = (y - t.ty) / canvas.stage.scale.y;
 
     // Allow other modules to overwrite this, such as Isometric
-    Hooks.callAll("dragDropPositioning", data);
+    Hooks.callAll("dragDropPositioning", { event: event, data: data });
 }
