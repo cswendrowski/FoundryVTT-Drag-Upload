@@ -140,10 +140,7 @@ async function CreateAmbientAudio(event, file) {
         volume: 1.0
     };
 
-    const [x, y] = [event.clientX, event.clientY];
-    const t = canvas.stage.worldTransform;
-    data.x = (x - t.tx) / canvas.stage.scale.x;
-    data.y = (y - t.ty) / canvas.stage.scale.y;
+    convertXYtoCanvas(data, event);
 
     canvas.layers[10].activate();
     AmbientSound.create(data);
@@ -211,10 +208,8 @@ async function CreateJournalPin(event, file) {
         fontSize: 48,
         textAnchor: CONST.TEXT_ANCHOR_POINTS.CENTER
       };
-    const [x, y] = [event.clientX, event.clientY];
-    const t = canvas.stage.worldTransform;
-    pinData.x = (x - t.tx) / canvas.stage.scale.x;
-    pinData.y = (y - t.ty) / canvas.stage.scale.y;
+
+    convertXYtoCanvas(pinData, event);
 
     // Activate Notes layer (if not already active)
     canvas.layers[6].activate();
@@ -325,10 +320,19 @@ function CreateImgData(event, response) {
         img: response.path
     };
 
+    convertXYtoCanvas(data, event);
+
+    return data;
+}
+
+function convertXYtoCanvas(data, event) {
+
+    // Acquire the cursor position transformed to Canvas coordinates
     const [x, y] = [event.clientX, event.clientY];
     const t = canvas.stage.worldTransform;
     data.x = (x - t.tx) / canvas.stage.scale.x;
     data.y = (y - t.ty) / canvas.stage.scale.y;
 
-    return data;
+    // Allow other modules to overwrite this, such as Isometric
+    Hooks.callAll("dragDropPositioning", data);
 }
