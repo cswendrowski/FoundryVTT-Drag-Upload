@@ -1,4 +1,4 @@
-![](https://img.shields.io/badge/Foundry-v0.6.2-informational)
+![](https://img.shields.io/badge/Foundry-v0.7.2-informational)
 [![](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-%243-orange)](https://www.buymeacoffee.com/T2tZvWJ)
 
 # Drag Upload (Get Over Here!)
@@ -29,3 +29,10 @@ Otherwise, it will be treated as an Image and created based on the current activ
 Thanks to [Itamarcu](https://github.com/itamarcu) for this wonderful addition!
 You can now drag upload images straight from a webbrowser. **This is not supported in Firefox**
 ![](./draguploadfromweb.gif)
+
+### v1.3.0
+Thanks to [Itamarcu](https://github.com/itamarcu), you can now create Actorless tokens!
+
+### v1.4.1
+We now integrate with the upcoming Isometric module!
+![](./draguploadiso.gif)
