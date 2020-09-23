@@ -1,8 +1,9 @@
 ![](https://img.shields.io/badge/Foundry-v0.6.2-informational)
 [![](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-%243-orange)](https://www.buymeacoffee.com/T2tZvWJ)
 
-
 # Drag Upload (Get Over Here!)
+
+## WARNING - Drag Upload will NOT work if you run Foundry in Admin mode on Windows due to a Windows security feature!
 
 Adds the ability to drag files onto the Foundry canvas to automatically create Tokens, Tiles, Journal Pins, and Ambient Audio
 
