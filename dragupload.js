@@ -11,6 +11,26 @@ Hooks.once('ready', async function() {
         } 
     })
     .bind($("#board")[0]);
+
+    Hooks.on("dragDropPositioning", (positioning) => {
+        let event = positioning.event;
+        let data = positioning.data;
+        if (game.scenes.viewed.getFlag('grape_juice-isometrics', 'is_isometric'))
+           {
+               const [x, y] = [event.clientX, event.clientY];
+               var world = new Matrix();
+               world.a = canvas.app.stage.worldTransform.a;
+               world.b = canvas.app.stage.worldTransform.b;
+               world.c = canvas.app.stage.worldTransform.c;
+               world.d = canvas.app.stage.worldTransform.d;
+               world.e = canvas.app.stage.worldTransform.tx;
+               world.f = canvas.app.stage.worldTransform.ty;
+       
+       
+               data.x = (world.inverse().applyToPoint(x,y).x);
+               data.y = (world.inverse().applyToPoint(x,y).y);
+           }
+       });
 });
 
 async function createFoldersIfMissing() {
@@ -275,44 +295,50 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
     if (type === "actorless") {
         createdType = Object.keys(CONFIG.Actor.sheetClasses)[0]
     }
-    const actor = await Actor.create(
-        {
-            name: data.name, 
-            type: createdType,
-            img: data.img
-        });
-        const actorData = duplicate(actor.data);
-    
-        // Prepare Token data specific to this placement
-        const td = actor.data.token;
-        const hg = canvas.dimensions.size / 2;
-        data.x -= (td.width * hg);
-        data.y -= (td.height * hg);
-    
-        // Snap the dropped position and validate that it is in-bounds
-        let tokenData = {x: data.x, y: data.y, hidden: event.altKey, img: tokenImageData.img };
-        if ( !event.shiftKey ) mergeObject(tokenData, canvas.grid.getSnappedPosition(data.x, data.y, 1));
-        if ( !canvas.grid.hitArea.contains(tokenData.x, tokenData.y) ) return false;
-    
-        // Get the Token image
-        if ( actorData.token.randomImg ) {
-          let images = await actor.getTokenImages();
-          images = images.filter(i => (images.length === 1) || !(i === this._lastWildcard));
-          const image = images[Math.floor(Math.random() * images.length)];
-          tokenData.img = this._lastWildcard = image;
-        }
-    
-        // Merge Token data with the default for the Actor
-        tokenData = mergeObject(actorData.token, tokenData, {inplace: true});
-    
-        // Submit the Token creation request and activate the Tokens layer (if not already active)
-        canvas.layers[7].activate();
-        Token.create(tokenData);
 
-        // delete actor if it's actorless
-        if (type === "actorless") {
-            Actor.delete(actor.id)
-        }
+    let actorName = data.name;
+    if (actorName.includes(".")) {
+        actorName = actorName.split(".")[0];
+    }
+
+    const actor = await Actor.create(
+    {
+        name: actorName,
+        type: createdType,
+        img: data.img
+    });
+    const actorData = duplicate(actor.data);
+
+    // Prepare Token data specific to this placement
+    const td = actor.data.token;
+    const hg = canvas.dimensions.size / 2;
+    data.x -= (td.width * hg);
+    data.y -= (td.height * hg);
+
+    // Snap the dropped position and validate that it is in-bounds
+    let tokenData = { x: data.x, y: data.y, hidden: event.altKey, img: tokenImageData.img };
+    if ( !event.shiftKey ) mergeObject(tokenData, canvas.grid.getSnappedPosition(data.x, data.y, 1));
+    if ( !canvas.grid.hitArea.contains(tokenData.x, tokenData.y) ) return false;
+
+    // Get the Token image
+    if ( actorData.token.randomImg ) {
+        let images = await actor.getTokenImages();
+        images = images.filter(i => (images.length === 1) || !(i === this._lastWildcard));
+        const image = images[Math.floor(Math.random() * images.length)];
+        tokenData.img = this._lastWildcard = image;
+    }
+
+    // Merge Token data with the default for the Actor
+    tokenData = mergeObject(actorData.token, tokenData, {inplace: true});
+
+    // Submit the Token creation request and activate the Tokens layer (if not already active)
+    canvas.layers[7].activate();
+    Token.create(tokenData);
+
+    // delete actor if it's actorless
+    if (type === "actorless") {
+        Actor.delete(actor.id)
+    }
 }
 
 function CreateImgData(event, response) {
@@ -335,4 +361,5 @@ function convertXYtoCanvas(data, event) {
 
     // Allow other modules to overwrite this, such as Isometric
     Hooks.callAll("dragDropPositioning", { event: event, data: data });
+    console.log(data);
 }
