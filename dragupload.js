@@ -1,9 +1,10 @@
 (() => { })();
 
 Hooks.once('ready', async function() {
-    console.log("Ready!");
 
-    await createFoldersIfMissing();
+    if (game.user.isGM) {
+        await createFoldersIfMissing();
+    }   
 
     new DragDrop({ 
         callbacks: { 
@@ -54,6 +55,7 @@ async function handleDrop(event) {
             console.log("DragUpload | No Files detected, exiting");
             // Let Foundry handle the event instead
             canvas._onDrop(event);
+            canvas._dragDrop.callbacks.drop(event);
             return;
         }
         // trimming query string
@@ -64,6 +66,7 @@ async function handleDrop(event) {
             console.log("DragUpload | Dragged non-file text:", url);
             // Let Foundry handle the event instead
             canvas._onDrop(event);
+            canvas._dragDrop.callbacks.drop(event);
             return
         }
         const extension = filename.substr(filename.lastIndexOf(".") + 1)
@@ -72,6 +75,7 @@ async function handleDrop(event) {
             console.log("DragUpload | Dragged file with bad extension:", url);
             // Let Foundry handle the event instead
             canvas._onDrop(event);
+            canvas._dragDrop.callbacks.drop(event);
             return
         }
         // special case: chrome imgur drag from an album gives a low-res webp file instead of a PNG
@@ -88,6 +92,7 @@ async function handleDrop(event) {
     if (file == undefined) {
         // Let Foundry handle the event instead
         canvas._onDrop(event);
+        canvas._dragDrop.callbacks.drop(event);
         return; 
     }
     console.log(file);
