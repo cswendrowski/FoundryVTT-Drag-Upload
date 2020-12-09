@@ -54,7 +54,6 @@ async function handleDrop(event) {
         if (!url) {
             console.log("DragUpload | No Files detected, exiting");
             // Let Foundry handle the event instead
-            canvas._onDrop(event);
             canvas._dragDrop.callbacks.drop(event);
             return;
         }
@@ -65,7 +64,6 @@ async function handleDrop(event) {
         if (!filename.includes(".")) {
             console.log("DragUpload | Dragged non-file text:", url);
             // Let Foundry handle the event instead
-            canvas._onDrop(event);
             canvas._dragDrop.callbacks.drop(event);
             return
         }
@@ -74,7 +72,6 @@ async function handleDrop(event) {
         if (!validExtensions.includes(extension)) {
             console.log("DragUpload | Dragged file with bad extension:", url);
             // Let Foundry handle the event instead
-            canvas._onDrop(event);
             canvas._dragDrop.callbacks.drop(event);
             return
         }
@@ -91,7 +88,6 @@ async function handleDrop(event) {
 
     if (file == undefined) {
         // Let Foundry handle the event instead
-        canvas._onDrop(event);
         canvas._dragDrop.callbacks.drop(event);
         return; 
     }
