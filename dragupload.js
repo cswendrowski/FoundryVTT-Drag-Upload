@@ -68,7 +68,7 @@ async function handleDrop(event) {
             return
         }
         const extension = filename.substr(filename.lastIndexOf(".") + 1)
-        const validExtensions = IMAGE_FILE_EXTENSIONS.concat(VIDEO_FILE_EXTENSIONS).concat(AUDIO_FILE_EXTENSIONS)
+        const validExtensions = CONST.IMAGE_FILE_EXTENSIONS.concat(CONST.VIDEO_FILE_EXTENSIONS).concat(CONST.AUDIO_FILE_EXTENSIONS)
         if (!validExtensions.includes(extension)) {
             console.log("DragUpload | Dragged file with bad extension:", url);
             // Let Foundry handle the event instead
