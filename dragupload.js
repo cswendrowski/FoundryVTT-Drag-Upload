@@ -68,7 +68,7 @@ async function handleDrop(event) {
             return
         }
         const extension = filename.substr(filename.lastIndexOf(".") + 1)
-        const validExtensions = IMAGE_FILE_EXTENSIONS.concat(VIDEO_FILE_EXTENSIONS).concat(AUDIO_FILE_EXTENSIONS)
+        const validExtensions = CONST.IMAGE_FILE_EXTENSIONS.concat(CONST.VIDEO_FILE_EXTENSIONS).concat(CONST.AUDIO_FILE_EXTENSIONS)
         if (!validExtensions.includes(extension)) {
             console.log("DragUpload | Dragged file with bad extension:", url);
             // Let Foundry handle the event instead
@@ -93,7 +93,7 @@ async function handleDrop(event) {
     }
     console.log(file);
 
-    if (AUDIO_FILE_EXTENSIONS.filter(x => x != "webm" && file.name.endsWith(x)).length > 0) {
+    if (CONST.AUDIO_FILE_EXTENSIONS.filter(x => x != "webm" && file.name.endsWith(x)).length > 0) {
         await HandleAudioFile(event, file);
         return;
     }
@@ -143,7 +143,7 @@ async function CreateAmbientAudio(event, file) {
 
     convertXYtoCanvas(data, event);
 
-    canvas.layers[10].activate();
+    canvas.getLayer("SoundsLayer").activate();
     AmbientSound.create(data);
 }
 
@@ -176,7 +176,7 @@ async function CreateTile(event, file) {
     if ( event.altKey ) data.hidden = true;
 
     // Activate Tile layer (if not already active)
-    canvas.layers[1].activate();
+    canvas.getLayer('BackgroundLayer').activate();
     Tile.create(data);
 }
 
@@ -213,7 +213,7 @@ async function CreateJournalPin(event, file) {
     convertXYtoCanvas(pinData, event);
 
     // Activate Notes layer (if not already active)
-    canvas.layers[6].activate();
+    canvas.getLayer("NotesLayer").activate();
     Note.create(pinData);
 }
 
@@ -234,7 +234,7 @@ async function CreateActor(event, file) {
     data.name = file.name;
     var tokenData = CreateImgData(event, response);
 
-    if (IMAGE_FILE_EXTENSIONS.filter(x => file.name.endsWith(x)).length == 0) {
+    if (CONST.IMAGE_FILE_EXTENSIONS.filter(x => file.name.endsWith(x)).length == 0) {
         data.img = "";
     }
 
@@ -313,7 +313,7 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
     tokenData = mergeObject(actorData.token, tokenData, {inplace: true});
 
     // Submit the Token creation request and activate the Tokens layer (if not already active)
-    canvas.layers[7].activate();
+    canvas.getLayer("TokenLayer").activate();
     Token.create(tokenData);
 
     // delete actor if it's actorless
