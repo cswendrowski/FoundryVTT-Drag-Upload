@@ -15,22 +15,24 @@ Hooks.once('ready', async function() {
 });
 
 async function createFoldersIfMissing() {
-    await createFolderIfMissing(".", "dragupload");
-    await createFolderIfMissing("dragupload", "dragupload/uploaded");
-    await createFolderIfMissing("dragupload/uploaded", "dragupload/uploaded/tokens");
-    await createFolderIfMissing("dragupload/uploaded", "dragupload/uploaded/tiles");
-    await createFolderIfMissing("dragupload/uploaded", "dragupload/uploaded/ambient");
-    await createFolderIfMissing("dragupload/uploaded", "dragupload/uploaded/journals");
+    await createFolderIfMissing("dragupload");
+    await createFolderIfMissing("dragupload/uploaded");
+    await createFolderIfMissing("dragupload/uploaded/tokens");
+    await createFolderIfMissing("dragupload/uploaded/tiles");
+    await createFolderIfMissing("dragupload/uploaded/ambient");
+    await createFolderIfMissing("dragupload/uploaded/journals");
 }
 
-async function createFolderIfMissing(target, folderPath) {
-    var source = "data";
+async function createFolderIfMissing(folderPath) {
+    let source = "data";
     if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
-    var base = await FilePicker.browse(source, folderPath);
-    console.log(base.target);
-    if (base.target == target)
+    try
+    {
+        await FilePicker.browse(source, folderPath);
+    }
+    catch (error)
     {
         await FilePicker.createDirectory(source, folderPath);
     }
@@ -45,7 +47,7 @@ async function handleDrop(event) {
     event.preventDefault();
     console.log(event);
 
-    var files = event.dataTransfer.files;
+    const files = event.dataTransfer.files;
     console.log(files);
 
     let file
@@ -98,10 +100,13 @@ async function handleDrop(event) {
         return;
     }
 
-    var layer = canvas.activeLayer.name;
+    const layer = canvas.activeLayer.name;
 
-    if (layer == "TileLayer") {
-        await CreateTile(event, file);
+    if (layer == "BackgroundLayer") {
+        await CreateTile(event, file, false);
+    }
+    else if (layer == "ForegroundLayer") {
+        await CreateTile(event, file, true);
     }
     else if (layer == "TokenLayer") {
         await CreateActor(event, file);
@@ -121,7 +126,7 @@ async function HandleAudioFile(event, file) {
 }
 
 async function CreateAmbientAudio(event, file) {
-    var source = "data";
+    let source = "data";
     if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
@@ -132,7 +137,7 @@ async function CreateAmbientAudio(event, file) {
         response = await FilePicker.upload(source, "dragupload/uploaded/ambient", file, {});
     }
 
-    var data = {
+    const data = {
         t: "l",
         path: response.path,
         radius: 10,
@@ -147,8 +152,8 @@ async function CreateAmbientAudio(event, file) {
     AmbientSound.create(data);
 }
 
-async function CreateTile(event, file) {
-    var source = "data";
+async function CreateTile(event, file, overhead) {
+    let source = "data";
     if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
@@ -160,12 +165,13 @@ async function CreateTile(event, file) {
     }
     console.log(response);
 
-    var data = CreateImgData(event, response);
+    const data = CreateImgData(event, response);
 
     const tex = await loadTexture(data.img);
     const ratio = canvas.dimensions.size / (data.tileSize || canvas.dimensions.size);
     data.width = tex.baseTexture.width * ratio;
     data.height = tex.baseTexture.height * ratio;
+    data.overhead = overhead;
 
     // Optionally snap to grid
     data.x = data.x - (data.width / 2);
@@ -176,12 +182,17 @@ async function CreateTile(event, file) {
     if ( event.altKey ) data.hidden = true;
 
     // Activate Tile layer (if not already active)
-    canvas.getLayer('BackgroundLayer').activate();
-    Tile.create(data);
+    if (overhead) {
+        canvas.getLayer('ForegroundLayer').activate();
+    }
+    else {
+        canvas.getLayer('BackgroundLayer').activate();
+    }
+    canvas.scene.createEmbeddedDocuments('Tile', [data], {});
 }
 
 async function CreateJournalPin(event, file) {
-    var source = "data";
+    let source = "data";
     if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
@@ -193,32 +204,32 @@ async function CreateJournalPin(event, file) {
     }
     console.log(response);
 
-    var data = {
+    const data = {
         name: file.name,
         img: response.path
     };
 
-    var journal = await JournalEntry.create(data);
+    const journal = await JournalEntry.create(data);
     console.log(journal);
 
-    var pinData = {
+    const pinData = {
         entryId: journal.id,
         icon: "icons/svg/book.svg",
         iconSize: 40,
         text: "",
         fontSize: 48,
         textAnchor: CONST.TEXT_ANCHOR_POINTS.CENTER
-      };
+    };
 
     convertXYtoCanvas(pinData, event);
 
     // Activate Notes layer (if not already active)
     canvas.getLayer("NotesLayer").activate();
-    Note.create(pinData);
+    canvas.scene.createEmbeddedDocuments('Note', [pinData], {});
 }
 
 async function CreateActor(event, file) {
-    var source = "data";
+    let source = "data";
     if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
         source = "forgevtt";
     }
@@ -230,9 +241,9 @@ async function CreateActor(event, file) {
     }
     console.log(response);
 
-    var data = CreateImgData(event, response);
+    const data = CreateImgData(event, response);
     data.name = file.name;
-    var tokenData = CreateImgData(event, response);
+    const tokenData = CreateImgData(event, response);
 
     if (CONST.IMAGE_FILE_EXTENSIONS.filter(x => file.name.endsWith(x)).length == 0) {
         data.img = "";
@@ -243,8 +254,8 @@ async function CreateActor(event, file) {
         return ui.notifications.warn(`You do not have permission to create new Tokens!`);
       }
 
-      var types =  Object.keys(CONFIG.Actor.sheetClasses);
-      types.push("actorless")
+    const types = Object.keys(CONFIG.Actor.sheetClasses);
+    types.push("actorless")
 
       if (types.length > 1) {
         let d = new Dialog({
@@ -311,19 +322,21 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
 
     // Merge Token data with the default for the Actor
     tokenData = mergeObject(actorData.token, tokenData, {inplace: true});
+    tokenData.actorId = actor.data._id;
+    tokenData.actorLink = true;
 
     // Submit the Token creation request and activate the Tokens layer (if not already active)
     canvas.getLayer("TokenLayer").activate();
-    Token.create(tokenData);
+    canvas.scene.createEmbeddedDocuments('Token', [tokenData], {});
 
     // delete actor if it's actorless
     if (type === "actorless") {
-        Actor.delete(actor.id)
+        actor.delete();
     }
 }
 
 function CreateImgData(event, response) {
-    var data = { 
+    const data = {
         img: response.path
     };
 
