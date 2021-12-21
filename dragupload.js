@@ -70,7 +70,7 @@ async function handleDrop(event) {
             return
         }
         const extension = filename.substr(filename.lastIndexOf(".") + 1)
-        const validExtensions = CONST.IMAGE_FILE_EXTENSIONS.concat(CONST.VIDEO_FILE_EXTENSIONS).concat(CONST.AUDIO_FILE_EXTENSIONS)
+        const validExtensions = Object.keys(CONST.IMAGE_FILE_EXTENSIONS).join() +','+ Object.keys(CONST.VIDEO_FILE_EXTENSIONS).join() +','+ Object.keys(CONST.AUDIO_FILE_EXTENSIONS).join()
         if (!validExtensions.includes(extension)) {
             console.log("DragUpload | Dragged file with bad extension:", url);
             // Let Foundry handle the event instead
@@ -95,7 +95,7 @@ async function handleDrop(event) {
     }
     console.log(file);
 
-    if (CONST.AUDIO_FILE_EXTENSIONS.filter(x => x != "webm" && file.name.endsWith(x)).length > 0) {
+    if (Object.keys(CONST.AUDIO_FILE_EXTENSIONS).filter(x => x != "webm" && file.name.endsWith(x)).length > 0) {
         await HandleAudioFile(event, file);
         return;
     }
@@ -148,8 +148,8 @@ async function CreateAmbientAudio(event, file) {
 
     convertXYtoCanvas(data, event);
 
-    canvas.getLayer("SoundsLayer").activate();
-    AmbientSound.create(data);
+    canvas.sounds.activate();
+    canvas.scene.createEmbeddedDocuments('AmbientSound', [data], {});
 }
 
 async function CreateTile(event, file, overhead) {
@@ -183,10 +183,10 @@ async function CreateTile(event, file, overhead) {
 
     // Activate Tile layer (if not already active)
     if (overhead) {
-        canvas.getLayer('ForegroundLayer').activate();
+        canvas.foreground.activate();
     }
     else {
-        canvas.getLayer('BackgroundLayer').activate();
+        canvas.background.activate();
     }
     canvas.scene.createEmbeddedDocuments('Tile', [data], {});
 }
@@ -224,7 +224,7 @@ async function CreateJournalPin(event, file) {
     convertXYtoCanvas(pinData, event);
 
     // Activate Notes layer (if not already active)
-    canvas.getLayer("NotesLayer").activate();
+    canvas.notes.activate();
     canvas.scene.createEmbeddedDocuments('Note', [pinData], {});
 }
 
@@ -245,7 +245,7 @@ async function CreateActor(event, file) {
     data.name = file.name;
     const tokenData = CreateImgData(event, response);
 
-    if (CONST.IMAGE_FILE_EXTENSIONS.filter(x => file.name.endsWith(x)).length == 0) {
+    if (Object.keys(CONST.IMAGE_FILE_EXTENSIONS).filter(x => file.name.endsWith(x)).length == 0) {
         data.img = "";
     }
 
@@ -326,7 +326,7 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
     tokenData.actorLink = true;
 
     // Submit the Token creation request and activate the Tokens layer (if not already active)
-    canvas.getLayer("TokenLayer").activate();
+    canvas.tokens.activate();
     canvas.scene.createEmbeddedDocuments('Token', [tokenData], {});
 
     // delete actor if it's actorless
