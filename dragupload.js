@@ -150,7 +150,6 @@ async function CreateAmbientAudio(event, file) {
 
     canvas.sounds.activate();
     canvas.scene.createEmbeddedDocuments('AmbientSound', [data], {});
-    //AmbientSound.create(data);
 }
 
 async function CreateTile(event, file, overhead) {
