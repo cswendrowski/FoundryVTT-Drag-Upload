@@ -1,9 +1,50 @@
+Hooks.once('init', async () => {
+    const usingTheForge = typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge;
+
+    game.settings.register("dragupload", "fileUploadSource", {
+        name: "The path files should be uploaded to",
+        scope: "world",
+        config: !usingTheForge,
+        type: String,
+        default: usingTheForge ? "forgevtt" : "data",
+        choices: {
+          "data": game.i18n.localize("FILES.SourceUser"),
+          "s3": game.i18n.localize("FILES.SourceS3"),
+        },
+        onChange: async () => { await initializeDragUpload(); }
+    });
+
+    const buckets = await FilePicker.browse("s3", "");
+    let bucketChoices = {};
+    for ( let bucket of buckets.dirs) {
+        bucketChoices[bucket] = bucket;
+    }
+    game.settings.register("dragupload", "fileUploadBucket", {
+        name: "If using S3, what S3 bucket should be used",
+        scope: "world",
+        config: !usingTheForge,
+        type: String,
+        default: usingTheForge ? "" : (FilePicker.S3_BUCKETS?.length > 0 ? FilePicker.S3_BUCKETS[0] : ""),
+        choices: bucketChoices,
+        onChange: async () => { await initializeDragUpload(); }
+    });
+
+    game.settings.register("dragupload", "fileUploadFolder", {
+        name: "The path files should be uploaded to",
+        hint: "Should look like 'dragupload/uploaded'",
+        scope: "world",
+        config: true,
+        type: String,
+        default: "dragupload/uploaded",
+        onChange: async () => { await initializeDragUpload(); }
+    });
+});
+
 Hooks.once('ready', async function() {
+    // Setup variables and folders
+    await initializeDragUpload();
 
-    if (game.user.isGM || game.user.hasPermission(CONST.USER_PERMISSIONS.FILES_UPLOAD)) {
-        await createFoldersIfMissing();
-    }   
-
+    // Enable binding
     new DragDrop({ 
         callbacks: { 
             drop: handleDrop
@@ -12,27 +53,47 @@ Hooks.once('ready', async function() {
     .bind(document.getElementById("board"));
 });
 
+async function initializeDragUpload() {
+    if (game.user.isGM || game.user.hasPermission(CONST.USER_PERMISSIONS.FILES_UPLOAD)) {
+        await createFoldersIfMissing();
+    }
+
+    //const targetBucket = game.settings.get("dragupload", "fileUploadBucket");
+    let folderParts = [];
+    const targetFolder = game.settings.get("dragupload", "fileUploadFolder");
+    folderParts = folderParts.concat(targetFolder.split("/")).filter(x => x!== "");
+
+    window.dragUpload = {};
+    window.dragUpload.targetFolder = folderParts.join("/");
+}
+
 async function createFoldersIfMissing() {
-    await createFolderIfMissing("dragupload");
-    await createFolderIfMissing("dragupload/uploaded");
-    await createFolderIfMissing("dragupload/uploaded/tokens");
-    await createFolderIfMissing("dragupload/uploaded/tiles");
-    await createFolderIfMissing("dragupload/uploaded/ambient");
-    await createFolderIfMissing("dragupload/uploaded/journals");
+    const targetLocation = game.settings.get("dragupload", "fileUploadFolder");
+    const targetLocationFolders = targetLocation.split("/").filter(x => x !== "");
+    let pathParts = [];
+    for ( const folder of targetLocationFolders ) {
+        pathParts.push(folder);
+        await createFolderIfMissing(pathParts.join("/"));
+    }
+    await createFolderIfMissing(pathParts.concat("tokens").join("/"));
+    await createFolderIfMissing(pathParts.concat("tiles").join("/"));
+    await createFolderIfMissing(pathParts.concat("ambient").join("/"));
+    await createFolderIfMissing(pathParts.concat("journals").join("/"));
 }
 
 async function createFolderIfMissing(folderPath) {
-    let source = "data";
-    if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
-        source = "forgevtt";
-    }
+    const source = game.settings.get("dragupload", "fileUploadSource");
     try
     {
-        await FilePicker.browse(source, folderPath);
+        let result = await FilePicker.browse(source, folderPath);
+        if ( !result.dir.includes(folderPath) ) await FilePicker.createDirectory(source, folderPath, source === "s3" ? { bucket: game.settings.get("dragupload", "fileUploadBucket") } : {});
     }
     catch (error)
     {
-        await FilePicker.createDirectory(source, folderPath);
+        try {
+            await FilePicker.createDirectory(source, folderPath, source === "s3" ? {bucket: game.settings.get("dragupload", "fileUploadBucket")} : {});
+        }
+        catch {}
     }
 }
 
@@ -127,15 +188,12 @@ async function HandleAudioFile(event, file) {
 }
 
 async function CreateAmbientAudio(event, file) {
-    let source = "data";
-    if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
-        source = "forgevtt";
-    }
-    let response
+    const source = game.settings.get("dragupload", "fileUploadSource");
+    let response;
     if (file.isExternalUrl) {
         response = {path: file.url}
     } else {
-        response = await FilePicker.upload(source, "dragupload/uploaded/ambient", file, {});
+        response = await FilePicker.upload(source, window.dragUpload.targetFolder + "/ambient", file, source === "s3" ? {bucket: game.settings.get("dragupload", "fileUploadBucket")} : {});
     }
 
     const data = {
@@ -154,15 +212,12 @@ async function CreateAmbientAudio(event, file) {
 }
 
 async function CreateTile(event, file, overhead) {
-    let source = "data";
-    if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
-        source = "forgevtt";
-    }
+    const source = game.settings.get("dragupload", "fileUploadSource");
     let response
     if (file.isExternalUrl) {
         response = {path: file.url}
     } else {
-        response = await FilePicker.upload(source, "dragupload/uploaded/tiles", file, {});
+        response = await FilePicker.upload(source, window.dragUpload.targetFolder + "/tiles", file, source === "s3" ? {bucket: game.settings.get("dragupload", "fileUploadBucket")} : {});
     }
     console.log(response);
 
@@ -193,15 +248,12 @@ async function CreateTile(event, file, overhead) {
 }
 
 async function CreateJournalPin(event, file) {
-    let source = "data";
-    if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
-        source = "forgevtt";
-    }
+    const source = game.settings.get("dragupload", "fileUploadSource");
     let response
     if (file.isExternalUrl) {
         response = {path: file.url}
     } else {
-        response = await FilePicker.upload(source, "dragupload/uploaded/journals", file, {});
+        response = await FilePicker.upload(source, window.dragUpload.targetFolder + "/journals", file, source === "s3" ? {bucket: game.settings.get("dragupload", "fileUploadBucket")} : {});
     }
     console.log(response);
 
@@ -230,15 +282,12 @@ async function CreateJournalPin(event, file) {
 }
 
 async function CreateActor(event, file) {
-    let source = "data";
-    if (typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge) {
-        source = "forgevtt";
-    }
+    const source = game.settings.get("dragupload", "fileUploadSource");
     let response
     if (file.isExternalUrl) {
         response = {path: file.url}
     } else {
-        response = await FilePicker.upload(source, "dragupload/uploaded/tokens", file, {});
+        response = await FilePicker.upload(source, window.dragUpload.targetFolder + "/tokens", file, source === "s3" ? {bucket: game.settings.get("dragupload", "fileUploadBucket")} : {});
     }
     console.log(response);
 
