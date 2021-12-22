@@ -1,8 +1,6 @@
-(() => { })();
-
 Hooks.once('ready', async function() {
 
-    if (game.user.isGM) {
+    if (game.user.isGM || game.user.hasPermission(CONST.USER_PERMISSIONS.FILES_UPLOAD)) {
         await createFoldersIfMissing();
     }   
 
@@ -11,7 +9,7 @@ Hooks.once('ready', async function() {
             drop: handleDrop
         } 
     })
-    .bind($("#board")[0]);
+    .bind(document.getElementById("board"));
 });
 
 async function createFoldersIfMissing() {
@@ -70,7 +68,10 @@ async function handleDrop(event) {
             return
         }
         const extension = filename.substr(filename.lastIndexOf(".") + 1)
-        const validExtensions = CONST.IMAGE_FILE_EXTENSIONS.concat(CONST.VIDEO_FILE_EXTENSIONS).concat(CONST.AUDIO_FILE_EXTENSIONS)
+        const validExtensions =
+          Object.keys(CONST.IMAGE_FILE_EXTENSIONS)
+          .concat(Object.keys(CONST.VIDEO_FILE_EXTENSIONS))
+          .concat(Object.keys(CONST.AUDIO_FILE_EXTENSIONS));
         if (!validExtensions.includes(extension)) {
             console.log("DragUpload | Dragged file with bad extension:", url);
             // Let Foundry handle the event instead
@@ -95,7 +96,7 @@ async function handleDrop(event) {
     }
     console.log(file);
 
-    if (CONST.AUDIO_FILE_EXTENSIONS.filter(x => x != "webm" && file.name.endsWith(x)).length > 0) {
+    if (Object.keys(CONST.AUDIO_FILE_EXTENSIONS).filter(x => x != "webm" && file.name.endsWith(x)).length > 0) {
         await HandleAudioFile(event, file);
         return;
     }
@@ -148,8 +149,8 @@ async function CreateAmbientAudio(event, file) {
 
     convertXYtoCanvas(data, event);
 
-    canvas.getLayer("SoundsLayer").activate();
-    AmbientSound.create(data);
+    canvas.sounds.activate();
+    await canvas.scene.createEmbeddedDocuments("AmbientSound", [data]);
 }
 
 async function CreateTile(event, file, overhead) {
@@ -176,19 +177,19 @@ async function CreateTile(event, file, overhead) {
     // Optionally snap to grid
     data.x = data.x - (data.width / 2);
     data.y = data.y - (data.height / 2);
-    if ( !event.shiftKey ) mergeObject(data, canvas.grid.getSnappedPosition(data.x, data.y, 1));
+    if ( !event.shiftKey ) foundry.utils.mergeObject(data, canvas.grid.getSnappedPosition(data.x, data.y, 1));
 
     // Create the tile as hidden if the ALT key is pressed
     if ( event.altKey ) data.hidden = true;
 
     // Activate Tile layer (if not already active)
     if (overhead) {
-        canvas.getLayer('ForegroundLayer').activate();
+        canvas.foreground.activate();
     }
     else {
-        canvas.getLayer('BackgroundLayer').activate();
+        canvas.background.activate();
     }
-    canvas.scene.createEmbeddedDocuments('Tile', [data], {});
+    return canvas.scene.createEmbeddedDocuments('Tile', [data], {});
 }
 
 async function CreateJournalPin(event, file) {
@@ -224,8 +225,8 @@ async function CreateJournalPin(event, file) {
     convertXYtoCanvas(pinData, event);
 
     // Activate Notes layer (if not already active)
-    canvas.getLayer("NotesLayer").activate();
-    canvas.scene.createEmbeddedDocuments('Note', [pinData], {});
+    canvas.notes.activate();
+    return canvas.scene.createEmbeddedDocuments('Note', [pinData], {});
 }
 
 async function CreateActor(event, file) {
@@ -245,7 +246,7 @@ async function CreateActor(event, file) {
     data.name = file.name;
     const tokenData = CreateImgData(event, response);
 
-    if (CONST.IMAGE_FILE_EXTENSIONS.filter(x => file.name.endsWith(x)).length == 0) {
+    if (Object.keys(CONST.IMAGE_FILE_EXTENSIONS).filter(x => file.name.endsWith(x)).length == 0) {
         data.img = "";
     }
 
@@ -299,7 +300,7 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
         type: createdType,
         img: data.img
     });
-    const actorData = duplicate(actor.data);
+    const actorData = foundry.utils.duplicate(actor.data);
 
     // Prepare Token data specific to this placement
     const td = actor.data.token;
@@ -309,7 +310,7 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
 
     // Snap the dropped position and validate that it is in-bounds
     let tokenData = { x: data.x, y: data.y, hidden: event.altKey, img: tokenImageData.img };
-    if ( !event.shiftKey ) mergeObject(tokenData, canvas.grid.getSnappedPosition(data.x, data.y, 1));
+    if ( !event.shiftKey ) foundry.utils.mergeObject(tokenData, canvas.grid.getSnappedPosition(data.x, data.y, 1));
     if ( !canvas.grid.hitArea.contains(tokenData.x, tokenData.y) ) return false;
 
     // Get the Token image
@@ -321,13 +322,13 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
     }
 
     // Merge Token data with the default for the Actor
-    tokenData = mergeObject(actorData.token, tokenData, {inplace: true});
+    tokenData = foundry.utils.mergeObject(actorData.token, tokenData, {inplace: true});
     tokenData.actorId = actor.data._id;
     tokenData.actorLink = true;
 
     // Submit the Token creation request and activate the Tokens layer (if not already active)
-    canvas.getLayer("TokenLayer").activate();
-    canvas.scene.createEmbeddedDocuments('Token', [tokenData], {});
+    canvas.getLayerByEmbeddedName("Token").activate();
+    await canvas.scene.createEmbeddedDocuments('Token', [tokenData], {});
 
     // delete actor if it's actorless
     if (type === "actorless") {
