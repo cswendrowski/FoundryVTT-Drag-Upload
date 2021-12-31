@@ -1,6 +1,7 @@
 Hooks.once('init', async () => {
     const usingTheForge = typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge;
 
+    console.log("REG1");
     game.settings.register("dragupload", "fileUploadSource", {
         name: "The path files should be uploaded to",
         scope: "world",
@@ -14,11 +15,20 @@ Hooks.once('init', async () => {
         onChange: async () => { await initializeDragUpload(); }
     });
 
-    const buckets = await FilePicker.browse("s3", "");
+    console.log("REG2");
     let bucketChoices = {};
-    for ( let bucket of buckets.dirs) {
-        bucketChoices[bucket] = bucket;
+    try {
+      const buckets = await FilePicker.browse("s3", "");
+      if (buckets) {
+        for ( let bucket of buckets.dirs) {
+            bucketChoices[bucket] = bucket;
+        }
+      }
     }
+    catch {
+      console.log("No S3 datapath");
+    }
+    
     game.settings.register("dragupload", "fileUploadBucket", {
         name: "If using S3, what S3 bucket should be used",
         scope: "world",
@@ -29,6 +39,7 @@ Hooks.once('init', async () => {
         onChange: async () => { await initializeDragUpload(); }
     });
 
+    console.log("REG4");
     game.settings.register("dragupload", "fileUploadFolder", {
         name: "The path files should be uploaded to",
         hint: "Should look like 'dragupload/uploaded'",
