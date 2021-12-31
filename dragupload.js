@@ -1,7 +1,6 @@
 Hooks.once('init', async () => {
     const usingTheForge = typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge;
 
-    console.log("REG1");
     game.settings.register("dragupload", "fileUploadSource", {
         name: "The path files should be uploaded to",
         scope: "world",
@@ -15,7 +14,6 @@ Hooks.once('init', async () => {
         onChange: async () => { await initializeDragUpload(); }
     });
 
-    console.log("REG2");
     let bucketChoices = {};
     try {
       const buckets = await FilePicker.browse("s3", "");
@@ -28,7 +26,7 @@ Hooks.once('init', async () => {
     catch {
       console.log("No S3 datapath");
     }
-    
+
     game.settings.register("dragupload", "fileUploadBucket", {
         name: "If using S3, what S3 bucket should be used",
         scope: "world",
@@ -39,7 +37,6 @@ Hooks.once('init', async () => {
         onChange: async () => { await initializeDragUpload(); }
     });
 
-    console.log("REG4");
     game.settings.register("dragupload", "fileUploadFolder", {
         name: "The path files should be uploaded to",
         hint: "Should look like 'dragupload/uploaded'",
@@ -140,7 +137,7 @@ async function handleDrop(event) {
             return
         }
         const extension = filename.substr(filename.lastIndexOf(".") + 1)
-        const validExtensions =
+        const validExtensions =        
           Object.keys(CONST.IMAGE_FILE_EXTENSIONS)
           .concat(Object.keys(CONST.VIDEO_FILE_EXTENSIONS))
           .concat(Object.keys(CONST.AUDIO_FILE_EXTENSIONS));
@@ -354,7 +351,7 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
         actorName = actorName.split(".")[0];
     }
 
-    const actor = await Actor.create(
+    const actor = await getDocumentClass("Actor").create(
     {
         name: actorName,
         type: createdType,
