@@ -1,4 +1,15 @@
 Hooks.once('init', async () => {
+
+    game.settings.register("dragupload", "fileUploadFolder", {
+        name: "The path files should be uploaded to",
+        hint: "Should look like 'dragupload/uploaded'",
+        scope: "world",
+        config: true,
+        type: String,
+        default: "dragupload/uploaded",
+        onChange: async () => { await initializeDragUpload(); }
+    });
+    
     const usingTheForge = typeof ForgeVTT != "undefined" && ForgeVTT.usingTheForge;
 
     game.settings.register("dragupload", "fileUploadSource", {
@@ -26,16 +37,6 @@ Hooks.once('init', async () => {
         type: String,
         default: usingTheForge ? "" : (FilePicker.S3_BUCKETS?.length > 0 ? FilePicker.S3_BUCKETS[0] : ""),
         choices: bucketChoices,
-        onChange: async () => { await initializeDragUpload(); }
-    });
-
-    game.settings.register("dragupload", "fileUploadFolder", {
-        name: "The path files should be uploaded to",
-        hint: "Should look like 'dragupload/uploaded'",
-        scope: "world",
-        config: true,
-        type: String,
-        default: "dragupload/uploaded",
         onChange: async () => { await initializeDragUpload(); }
     });
 });
