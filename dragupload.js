@@ -14,11 +14,19 @@ Hooks.once('init', async () => {
         onChange: async () => { await initializeDragUpload(); }
     });
 
-    const buckets = await FilePicker.browse("s3", "");
     let bucketChoices = {};
-    for ( let bucket of buckets.dirs) {
-        bucketChoices[bucket] = bucket;
+    try {
+      const buckets = await FilePicker.browse("s3", "");
+      if (buckets) {
+        for ( let bucket of buckets.dirs) {
+            bucketChoices[bucket] = bucket;
+        }
+      }
     }
+    catch {
+      console.log("No S3 datapath");
+    }
+
     game.settings.register("dragupload", "fileUploadBucket", {
         name: "If using S3, what S3 bucket should be used",
         scope: "world",
@@ -129,7 +137,7 @@ async function handleDrop(event) {
             return
         }
         const extension = filename.substr(filename.lastIndexOf(".") + 1)
-        const validExtensions =
+        const validExtensions =        
           Object.keys(CONST.IMAGE_FILE_EXTENSIONS)
           .concat(Object.keys(CONST.VIDEO_FILE_EXTENSIONS))
           .concat(Object.keys(CONST.AUDIO_FILE_EXTENSIONS));
@@ -343,7 +351,7 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
         actorName = actorName.split(".")[0];
     }
 
-    const actor = await Actor.create(
+    const actor = await getDocumentClass("Actor").create(
     {
         name: actorName,
         type: createdType,
