@@ -14,21 +14,6 @@ Hooks.once('init', async () => {
         onChange: async () => { await initializeDragUpload(); }
     });
 
-    const buckets = await FilePicker.browse("s3", "");
-    let bucketChoices = {};
-    for ( let bucket of buckets.dirs) {
-        bucketChoices[bucket] = bucket;
-    }
-    game.settings.register("dragupload", "fileUploadBucket", {
-        name: "If using S3, what S3 bucket should be used",
-        scope: "world",
-        config: !usingTheForge,
-        type: String,
-        default: usingTheForge ? "" : (FilePicker.S3_BUCKETS?.length > 0 ? FilePicker.S3_BUCKETS[0] : ""),
-        choices: bucketChoices,
-        onChange: async () => { await initializeDragUpload(); }
-    });
-
     game.settings.register("dragupload", "fileUploadFolder", {
         name: "The path files should be uploaded to",
         hint: "Should look like 'dragupload/uploaded'",
@@ -38,6 +23,26 @@ Hooks.once('init', async () => {
         default: "dragupload/uploaded",
         onChange: async () => { await initializeDragUpload(); }
     });
+
+    try {
+        const buckets = await FilePicker.browse("s3", "");
+        let bucketChoices = {};
+        for ( let bucket of buckets.dirs ) {
+            bucketChoices[bucket] = bucket;
+        }
+        game.settings.register("dragupload", "fileUploadBucket", {
+            name: "If using S3, what S3 bucket should be used",
+            scope: "world",
+            config: !usingTheForge,
+            type: String,
+            default: usingTheForge ? "" : (FilePicker.S3_BUCKETS?.length > 0 ? FilePicker.S3_BUCKETS[0] : ""),
+            choices: bucketChoices,
+            onChange: async () => {
+                await initializeDragUpload();
+            }
+        });
+    }
+    catch {}
 });
 
 Hooks.once('ready', async function() {
