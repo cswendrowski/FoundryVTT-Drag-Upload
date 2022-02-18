@@ -167,18 +167,18 @@ async function handleDrop(event) {
         return;
     }
 
-    const layer = canvas.activeLayer.name;
+    const layer = game.canvas.activeLayer.name;
 
-    if (layer == "BackgroundLayer") {
+    if (layer.includes("BackgroundLayer")) {
         await CreateTile(event, file, false);
     }
-    else if (layer == "ForegroundLayer") {
+    else if (layer.includes("ForegroundLayer")) {
         await CreateTile(event, file, true);
     }
-    else if (layer == "TokenLayer") {
+    else if (layer.includes("TokenLayer")) {
         await CreateActor(event, file);
     }
-    else if (layer == "NotesLayer") {
+    else if (layer.includes("NotesLayer")) {
         await CreateJournalPin(event, file);
     }
     else {
