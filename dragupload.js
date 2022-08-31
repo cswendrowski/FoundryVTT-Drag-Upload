@@ -50,10 +50,10 @@ Hooks.once('ready', async function() {
     await initializeDragUpload();
 
     // Enable binding
-    new DragDrop({ 
-        callbacks: { 
+    new DragDrop({
+        callbacks: {
             drop: handleDrop
-        } 
+        }
     })
     .bind(document.getElementById("board"));
 });
@@ -158,7 +158,7 @@ async function handleDrop(event) {
     if (file == undefined) {
         // Let Foundry handle the event instead
         canvas._dragDrop.callbacks.drop(event);
-        return; 
+        return;
     }
     console.log(file);
 
@@ -243,11 +243,21 @@ async function CreateTile(event, file, overhead) {
     if ( event.altKey ) data.hidden = true;
 
     // Activate Tile layer (if not already active)
-    if (overhead) {
-        canvas.foreground.activate();
+    if ( game.release?.generation <= 9 ) {
+        if (overhead) {
+            canvas.foreground.activate();
+        }
+        else {
+            canvas.background.activate();
+        }
     }
     else {
-        canvas.background.activate();
+        if ( overhead ) {
+            ui.controls.controls.find(c => c.name === "tiles").foreground = true;
+        } else {
+            ui.controls.controls.find(c => c.name === "tiles").foreground = false;
+        }
+        canvas.perception.update({refreshLighting: true, refreshTiles: true}, true);
     }
     return canvas.scene.createEmbeddedDocuments('Tile', [data], {});
 }
@@ -333,8 +343,8 @@ async function CreateActor(event, file) {
       else {
         await CreateActorWithType(event, data, tokenData, types[0]);
       }
-  
-      
+
+
 }
 
 async function CreateActorWithType(event, data, tokenImageData, type) {
@@ -362,23 +372,46 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
     data.x -= (td.width * hg);
     data.y -= (td.height * hg);
 
-    // Snap the dropped position and validate that it is in-bounds
-    let tokenData = { x: data.x, y: data.y, hidden: event.altKey, img: tokenImageData.img };
-    if ( !event.shiftKey ) foundry.utils.mergeObject(tokenData, canvas.grid.getSnappedPosition(data.x, data.y, 1));
-    if ( !canvas.grid.hitArea.contains(tokenData.x, tokenData.y) ) return false;
+    if ( game.release?.generation <= 9 ) {
+        // Snap the dropped position and validate that it is in-bounds
+        let tokenData = { x: data.x, y: data.y, hidden: event.altKey, img: tokenImageData.img };
+        if ( !event.shiftKey ) foundry.utils.mergeObject(tokenData, canvas.grid.getSnappedPosition(data.x, data.y, 1));
+        if ( !canvas.grid.hitArea.contains(tokenData.x, tokenData.y) ) return false;
 
-    // Get the Token image
-    if ( actorData.token.randomImg ) {
-        let images = await actor.getTokenImages();
-        images = images.filter(i => (images.length === 1) || !(i === this._lastWildcard));
-        const image = images[Math.floor(Math.random() * images.length)];
-        tokenData.img = this._lastWildcard = image;
+        // Get the Token image
+        if ( actorData.token.randomImg ) {
+            let images = await actor.getTokenImages();
+            images = images.filter(i => (images.length === 1) || !(i === this._lastWildcard));
+            const image = images[Math.floor(Math.random() * images.length)];
+            tokenData.img = this._lastWildcard = image;
+        }
+
+        // Merge Token data with the default for the Actor
+        tokenData = foundry.utils.mergeObject(actorData.token, tokenData, {inplace: true});
+        tokenData.actorId = actor.data._id;
+        tokenData.actorLink = true;
     }
+    else {
+        // Snap the dropped position and validate that it is in-bounds
+        let tokenData = { x: data.x, y: data.y, hidden: event.altKey, img: tokenImageData.img };
+        if ( !event.shiftKey ) foundry.utils.mergeObject(tokenData, canvas.grid.getSnappedPosition(data.x, data.y, 1));
+        const d = canvas.dimensions;
+        tokenData.x = Math.clamped(tokenData.x, 0, d.width-1);
+        tokenData.y = Math.clamped(tokenData.y, 0, d.height-1);
 
-    // Merge Token data with the default for the Actor
-    tokenData = foundry.utils.mergeObject(actorData.token, tokenData, {inplace: true});
-    tokenData.actorId = actor.data._id;
-    tokenData.actorLink = true;
+        // Get the Token image
+        if ( actorData.prototypeToken.randomImg ) {
+            let images = await actor.getTokenImages();
+            images = images.filter(i => (images.length === 1) || !(i === this._lastWildcard));
+            const image = images[Math.floor(Math.random() * images.length)];
+            tokenData.img = this._lastWildcard = image;
+        }
+
+        // Merge Token data with the default for the Actor
+        tokenData = foundry.utils.mergeObject(actorData.prototypeToken, tokenData, {inplace: true});
+        tokenData.actorId = actor.data._id;
+        tokenData.actorLink = true;
+    }
 
     // Submit the Token creation request and activate the Tokens layer (if not already active)
     canvas.getLayerByEmbeddedName("Token").activate();
