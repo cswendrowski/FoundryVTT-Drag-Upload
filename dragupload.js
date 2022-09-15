@@ -120,7 +120,7 @@ async function handleDrop(event) {
         if (!url) {
             console.log("DragUpload | No Files detected, exiting");
             // Let Foundry handle the event instead
-            canvas._dragDrop.callbacks.drop(event);
+            canvas._onDrop(event);
             return;
         }
         // trimming query string
@@ -130,7 +130,7 @@ async function handleDrop(event) {
         if (!filename.includes(".")) {
             console.log("DragUpload | Dragged non-file text:", url);
             // Let Foundry handle the event instead
-            canvas._dragDrop.callbacks.drop(event);
+            canvas._onDrop(event);
             return
         }
         const extension = filename.substr(filename.lastIndexOf(".") + 1)
@@ -141,7 +141,7 @@ async function handleDrop(event) {
         if (!validExtensions.includes(extension)) {
             console.log("DragUpload | Dragged file with bad extension:", url);
             // Let Foundry handle the event instead
-            canvas._dragDrop.callbacks.drop(event);
+            canvas._onDrop(event);
             return
         }
         // special case: chrome imgur drag from an album gives a low-res webp file instead of a PNG
@@ -157,7 +157,7 @@ async function handleDrop(event) {
 
     if (file == undefined) {
         // Let Foundry handle the event instead
-        canvas._dragDrop.callbacks.drop(event);
+        canvas._onDrop(event);
         return;
     }
     console.log(file);
@@ -372,9 +372,10 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
     data.x -= (td.width * hg);
     data.y -= (td.height * hg);
 
+    let tokenData;
     if ( game.release?.generation <= 9 ) {
         // Snap the dropped position and validate that it is in-bounds
-        let tokenData = { x: data.x, y: data.y, hidden: event.altKey, img: tokenImageData.img };
+        tokenData = { x: data.x, y: data.y, hidden: event.altKey, img: tokenImageData.img };
         if ( !event.shiftKey ) foundry.utils.mergeObject(tokenData, canvas.grid.getSnappedPosition(data.x, data.y, 1));
         if ( !canvas.grid.hitArea.contains(tokenData.x, tokenData.y) ) return false;
 
@@ -393,7 +394,7 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
     }
     else {
         // Snap the dropped position and validate that it is in-bounds
-        let tokenData = { x: data.x, y: data.y, hidden: event.altKey, img: tokenImageData.img };
+        tokenData = { x: data.x, y: data.y, hidden: event.altKey, img: tokenImageData.img };
         if ( !event.shiftKey ) foundry.utils.mergeObject(tokenData, canvas.grid.getSnappedPosition(data.x, data.y, 1));
         const d = canvas.dimensions;
         tokenData.x = Math.clamped(tokenData.x, 0, d.width-1);
