@@ -358,7 +358,7 @@ async function CreateActorWithType(event, data, tokenImageData, type) {
         actorName = actorName.split(".")[0];
     }
 
-    const actor = await Actor.create(
+    const actor = await getDocumentClass("Actor").create(
     {
         name: actorName,
         type: createdType,
