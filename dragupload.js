@@ -155,7 +155,8 @@ async function handleDrop(event) {
         file = files[0]
     }
 
-    if (file == undefined) {
+    // file.path won't be set if it's an image dragged from within foundry itself instead of dragged from the OS
+    if (file == undefined || !file.path) {
         // Let Foundry handle the event instead
         canvas._onDrop(event);
         return;
